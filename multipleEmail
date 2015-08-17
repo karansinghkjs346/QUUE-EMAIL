@@ -1,0 +1,121 @@
+package MailQueue;
+
+
+
+import java.sql.SQLException;
+import java.util.Vector;
+
+import javax.mail.MessagingException;
+import javax.mail.Transport;
+
+public class MultipleEmail extends Thread{
+	private Thread th=null;
+	public String thread_Name;
+	public int thread_Num;
+	public Vector<Integer> ID_Tracker;
+	
+	 public MultipleEmail(int num)
+	{
+		thread_Num=num;
+		thread_Name="Thread_"+thread_Num;
+		ID_Tracker=new Vector<Integer>();
+	}
+	
+		public void start()
+		{
+			if(th==null)
+			{
+			th=new Thread(this,thread_Name);
+			th.start();
+			}
+		}
+		
+		
+		public Email[] getMailsFromPairs(String from, String to)
+		{
+			Vector<Email> same_Add_Mails;
+         DbCon db=new DbCon(); 
+			try {
+	            same_Add_Mails = db.getSpecificMails(from, to);   
+	            
+	            Email[] mails = new Email[same_Add_Mails.size()];   
+	            
+	            
+	            for(int i=0; i<same_Add_Mails.size(); i++) {
+	                 mails[i] = same_Add_Mails.get(i);
+
+//	                mails[i] = new Email();
+//	                mails[i].id = Integer.parseInt(str[0]);
+//	                mails[i].from = str[1];
+//	                mails[i].to = str[2];
+//	                mails[i].subject = str[3];
+//	                mails[i].body = str[4];
+	            }
+	            return mails;
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            System.out.println("Could not fetch emails: " + e.getMessage());
+	            return null;
+	        }
+		}
+	
+		
+		  public boolean sendMails(String from, String to, Email[] mails) {
+		       Mail_SMTP sender=new Mail_SMTP();
+		        
+		        try {
+		        	sender.sendEmail(from, to, mails, this);    
+		           return true;
+		            }
+		        
+		        	catch (MessagingException ex) {
+		            ex.printStackTrace();
+		            return false;
+		        }
+		    }
+
+		  
+		  
+		  
+		  public void run() {
+		        try {
+		            
+		            for(int i=this.thread_Num-1 ; i<MailApp.differentPairs_DB.size(); i += MailApp.threadCount) {
+		                
+		                String[] str = MailApp.differentPairs_DB.get(i);
+		                Email[] emails = this.getMailsFromPairs(str[0], str[1]);   
+		                if(emails.length > 0) {
+		                    String from = emails[0].from;
+		                    String to = emails[0].to;
+
+		                    if(this.sendMails(from, to, emails)) {       
+		                        System.out.println(
+		                                this.thread_Name + ": " 
+		                                + emails.length + " emails from "
+		                                + from + " email to " 
+		                                + to + " email is sent");
+		                        
+		                    } else {
+		                        System.out.println(
+		                                this.thread_Name + ": Could not send "
+		                                + emails.length + "the emails from "
+		                                + from + " email to " 
+		                                + to + " email");
+		                    }
+		                }
+		            }
+		            try {
+		                new DbCon().updateSentEmail(this.ID_Tracker);     //after each threads finishes sending mails, they update the sent_bit = 1
+		            } catch (SQLException e) {
+		                System.out.println(this.thread_Name + ": Could not update sent_bit of email hvaing ID");
+		            }
+		        } catch (Exception e) {
+		            e.printStackTrace();
+		            System.out.println("Error: " +  thread_Name + " - " + e.getMessage());
+		        }
+		        System.out.println("Thread " +  thread_Name + " exiting.");
+		    }
+		  
+		  
+		  
+}

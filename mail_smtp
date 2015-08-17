@@ -1,0 +1,77 @@
+package MailQueue;
+
+import java.util.Properties;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+public class Mail_SMTP {
+
+	public static String SMTP_HOST = "relayxxx.xxxjangosmtp.net"; // Host address 
+	public static  String	USER = "abcdef"; // Username of the Server
+	public  static String	PASSWORD= "************"; // Password of the Server
+	private static Properties prop = null; // The properties and the session object
+	private static Session sessioObj = null; 
+
+	public Mail_SMTP() {
+		if (Mail_SMTP.prop == null) { // Set values to the props object if it is null
+										
+			prop = new Properties();
+			prop.put("mail.smtp.auth", "true");
+			prop.put("mail.smtp.starttls.enable", "true");
+			prop.put("mail.smtp.host", SMTP_HOST);
+			prop.put("mail.smtp.port", "25");
+
+		}
+//creating the seesion object if its not yet initialized 
+		if (Mail_SMTP.sessioObj == null) { 
+			sessioObj = Session.getInstance(prop,
+					new javax.mail.Authenticator() {
+						@Override
+						protected PasswordAuthentication getPasswordAuthentication() {
+							return new PasswordAuthentication(USER,
+									PASSWORD);
+						}
+					});
+		}
+	}
+	//function for sending the mail from SMTP 
+	 public boolean sendEmail(String from, String to, Email[] mails, MultipleEmail ME_TH) throws MessagingException {
+
+		 for(int i=0; i<mails.length; i++) {
+         	System.out.println("Mail SENT TO :"+mails[i].subject);
+         	System.out.println("Mail SENT TO :"+mails[i].body);
+             System.out.println("Mail SENT TO :"+mails[i].id);
+             ME_TH.ID_Tracker.addElement(mails[i].id);
+            
+		 }
+		 return true;
+		 
+		 //	        try {
+//	        	//for the from and to setting the field values 
+//	            Message message = new MimeMessage(sessioObj);
+//	            message.setFrom(new InternetAddress(from));
+//	            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+//	            
+//	    //As the body and subject will be different for each and every mail so we are adding them differently 
+//	            for(int i=0; i<mails.length; i++) {
+//	            	message.setSubject(mails[i].subject);
+//	            	message.setText(mails[i].body);
+//	                Transport.send(message);
+//	                ME_TH.ID_Tracker.addElement(mails[i].id);
+//	            }
+//	            return true;
+//	        } catch (MessagingException e) {
+//	            throw e;
+//	        }
+	    }
+	
+	
+	
+
+}

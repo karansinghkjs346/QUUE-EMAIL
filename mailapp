@@ -1,0 +1,34 @@
+package MailQueue;
+
+
+import java.io.IOException;
+import java.util.Vector;
+
+public class MailApp {
+	
+	
+	
+	 public static Vector<String[]> differentPairs_DB = null;        
+	    public static int threadCount= 2;
+
+	    private MailApp() {}
+	    
+	    public static void main(String[] args) throws IOException{
+	        
+	    DbCon d=new DbCon();
+	    	
+	    	try {
+				differentPairs_DB = d.getAllDistinctMailPairs();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}     
+	        if(differentPairs_DB != null ) {
+	            MultipleEmail me;
+	            for(int i=1; i<=threadCount; i++) {
+	                me = new MultipleEmail(i);
+	                me.start();
+	            }
+	        }
+	    }
+
+}

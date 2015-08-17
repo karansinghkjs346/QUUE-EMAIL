@@ -1,0 +1,219 @@
+Enter file contents herepackage MailQueue;
+
+
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Vector;
+
+//Data Base Controller Class 
+public class DbCon {
+
+	static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+	static final String DB_URL = "jdbc:mysql://localhost/test";
+	static final String DB_Name = "test";
+	static final String TABLE_NAME = "EmailQueue";
+
+	// Database credentials
+	static final String USER = "root";
+	static final String PASS = "root";
+	static final int PORT = 3306;
+
+	public static Connection conn = null;
+	public static Statement stmt = null;
+
+	DbCon() {
+
+		try {
+			// Reg the driver and connecting to the database
+			Class.forName(JDBC_DRIVER);
+			DbCon.conn = DriverManager.getConnection(DB_URL, USER, PASS);
+			
+		   
+
+		} catch (ClassNotFoundException e) {
+			System.out.println("Error" + JDBC_DRIVER + " not found");
+			e.printStackTrace();
+		} catch (SQLException e) {
+			System.out.println("Message:" + e.getMessage());
+			e.printStackTrace();
+		} 
+
+	}
+
+//	
+//	public static void main(String args[]) throws SQLException
+//	{DbCon d=new DbCon();
+//		stmt = conn.createStatement();
+//		
+////	 System.out.println(d.insertMail("karan@gmail.com", "apporva@gmail.com", "Hi B ful ", "Dont be exited this is a dummy mail "));
+//  	  for(int i=0; i<10; i++) {
+//            for(int j=0; j<5; j++) {
+//              d.insertMail("karan@gmail.com"+i, "apporva@gmail.com"+j, "Hi B Ful "+ (i*5+j), "This is a dummy mail");
+//               
+//            }
+//        }
+//	
+////		String sql,sql1;
+////		sql="SET autocommit=0";
+////		stmt.executeQuery(sql);
+////	      sql = "SELECT * FROM karan where id="+1+" FOR UPDATE";
+////	      ResultSet rs1 = stmt.executeQuery(sql);
+////	      sql1="SELECT * FROM karan";
+////	      ResultSet rs = stmt.executeQuery(sql1);
+////	      //STEP 5: Extract data from result set
+////	      while(rs.next()){
+////	         //Retrieve by column name
+////	         int id  = rs.getInt("Id");
+////	         String first = rs.getString("name");
+////
+////	         //Display values
+////	         System.out.print("ID: " + id);
+////	         System.out.print(", First: " + first);
+////	      }
+//
+//	   	
+//	   	
+//	   	
+//	   	
+//	}
+	
+	
+	
+	
+	public  int insertMail(String from, String to, String sub, String body) {
+        if(conn == null) {
+            return -1;
+        } 
+        
+            Statement stmt = null;
+            try {
+                stmt = conn.createStatement();
+                String sql = "INSERT INTO " + TABLE_NAME + "(from_email_address, to_email_address, subject, body)"+ "VALUES ('"+ from +"', '"+ to +"', '"+ sub + "', '"+ body +"')";
+                int num_rows_affected = stmt.executeUpdate(sql);
+                return num_rows_affected;
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    stmt.close();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+			return -1;
+        
+    }
+	
+	
+	 public Vector<String[]> getAllDistinctMailPairs() throws Exception{
+	        if(conn == null) {
+	            return null;
+	        } else {
+	            Vector<String[]> pairs = new Vector<String[]>();
+	        
+	            ResultSet rs = null;
+	            Statement stmt = null;
+	            try {
+	                 stmt = conn.createStatement();
+	                String sql = "SELECT DISTINCT from_email_address, to_email_address FROM `EmailQueue;";
+	                rs = stmt.executeQuery(sql);
+	                while(rs.next()) {
+	                    String[] record = {
+	                        rs.getString("from_email_address"),
+	                        rs.getString("to_email_address")
+	                    };
+
+	                    pairs.add(record);
+	                }
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	                throw e;
+	            } finally {
+	                rs.close();
+	                stmt.close();
+	            }
+	            return pairs;
+	        }
+	    }
+	
+	
+	
+	
+	
+	 public Vector<Email> getSpecificMails(String from, String to) throws Exception {
+	        if(conn == null) {
+	            return null;
+	        } 
+	            Vector<Email> mails = new Vector<Email>();
+	            Statement stmt = null;
+	            ResultSet rs = null;
+	            try {
+	                stmt = conn.createStatement();
+	            
+	                String sql = "SELECT id, from_email_address, to_email_address, subject, body FROM " 
+	                        + TABLE_NAME + " WHERE from_email_address = '" 
+	                        + from + "' AND to_email_address = '" 
+	                        + to + "' AND flag ='N' ORDER BY id FOR UPDATE ";
+	                
+	                rs = stmt.executeQuery(sql);
+	                while(rs.next()) {
+	                    Email email = new Email();
+	                    email.id = rs.getInt("id");
+	                    email.from= rs.getString("from_email_address");
+	                    email.to = rs.getString("to_email_address");
+	                    email.subject = rs.getString("subject");
+	                    email.body= rs.getString("body");
+	                    mails.add(email);
+	                }
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	                throw e;
+	            } finally {
+	                rs.close();
+	                stmt.close();
+	            }
+	            return mails;
+	        
+	    }
+	
+	  public int updateSentEmail(Vector<Integer> ids) throws SQLException {
+	        if(conn == null) {
+	            return -1;
+	        } else {
+	            int rows_updated = 0;   
+	            Statement stmt = null;
+	            try {
+	            	   System.out.println(ids.size()+" updating the list of size ");
+	                stmt = conn.createStatement();
+	                String list_for_updation = "(";
+	                for(int i=0; i<ids.size()-1; i++) {
+	                	list_for_updation += ids.get(i);
+	                	list_for_updation += ",";
+	                }
+	                list_for_updation += ids.get(ids.size()-1);
+	                list_for_updation += ")";
+	             
+	                String sql = "UPDATE EmailQueue SET Flag = 'Y' WHERE id IN " + list_for_updation;
+	                rows_updated = stmt.executeUpdate(sql);
+	                String sql1="Commit";
+	                stmt.executeUpdate(sql1);
+	            } catch (SQLException e) {
+	                e.printStackTrace();
+	                throw e;
+	            } finally {
+	                stmt.close();
+	            }
+	            return rows_updated;
+	        }
+	    }
+	
+	
+	
+	
+	
+}

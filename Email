@@ -1,0 +1,26 @@
+package MailQueue;
+
+public class Email {
+
+	  public String from, to, subject, body;
+	    public int id;
+	    
+	    public Email()
+	    {
+	    	this.from=null;
+	    	this.to=null;
+	    	this.id=0;
+	    	this.subject=null;
+	    	this.body=null;
+	    }
+	    public Email(String from,String to,String subject,String body,int id)
+	    {
+	    	this.from=from;
+	    	this.to=to;
+	    	this.id=id;
+	    	this.subject=subject;
+	    	this.body=body;
+	    	
+	    }
+	
+}
